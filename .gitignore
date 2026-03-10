@@ -1,4 +1,16 @@
 **/.env
 **/node_module
 **/node_modules
-tests/tmp_user_data/ 
+tests/tmp_user_data/
+**/__pycache__/
+backend/venv/
+.agents/
+package-lock.json
+pip
+py
+backend/pip
+backend/py
+backend/package-lock.json
+*.webp
+*.png
+ 
