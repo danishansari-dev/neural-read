@@ -7,11 +7,10 @@ from routers import highlights, auth
 try:
     nltk.data.find('tokenizers/punkt')
 except LookupError:
-    nltk.download('punkt')
-try:
-    nltk.data.find('corpora/stopwords')
-except LookupError:
-    nltk.download('stopwords')
+    nltk.download('punkt_tab', quiet=True)
+    nltk.download('stopwords', quiet=True)
+except Exception as e:
+    print(f"Warning: Failed to download NLTK data: {e}")
 
 app = FastAPI(title="NeuralRead API")
 
