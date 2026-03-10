@@ -22,8 +22,8 @@
             "exclude_matches": [
                 "http://localhost/*",
                 "https://localhost/*",
-                "chrome://extensions/*",
-                "chrome-extension://*/*"
+                "http://127.0.0.1/*",
+                "https://127.0.0.1/*"
             ],
             "js": [
                 "config.js",
