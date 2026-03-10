@@ -1,0 +1,32 @@
+{
+    "manifest_version": 3,
+    "name": "NeuralRead",
+    "version": "1.0",
+    "description": "Auto-highlights important sentences on webpages and builds a personal knowledge graph.",
+    "permissions": [
+        "storage",
+        "activeTab",
+        "scripting"
+    ],
+    "background": {
+        "service_worker": "background.js",
+        "type": "module"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "css": [
+                "styles.css"
+            ],
+            "js": [
+                "content.js"
+            ]
+        }
+    ],
+    "action": {
+        "default_popup": "popup.html",
+        "default_title": "NeuralRead Config"
+    }
+}

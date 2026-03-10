@@ -1,0 +1,4 @@
+**/.env
+**/node_module
+**/node_modules
+tests/tmp_user_data/ 

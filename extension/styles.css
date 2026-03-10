@@ -1,0 +1,35 @@
+/**
+ * Styles for highlighted sentences on the webpage.
+ * This exists to provide the visual feedback to the user on what text is considered important.
+ * It is injected automatically by the manifest onto matching pages.
+ */
+
+.nr-highlight {
+    background-color: #ffd16633;
+    /* ~20% opacity of the accent color */
+    border-bottom: 2px solid #ffd166;
+    border-radius: 2px;
+    /* Added transition for a smoother appearance when highlights are added dynamically */
+    transition: background-color 0.2s ease-in-out;
+    cursor: pointer;
+}
+
+/* Added badge for highlight count visibility */
+.nr-badge {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #111;
+    border: 1px solid #ffd166;
+    color: #ffd166;
+    font-family: monospace;
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    z-index: 999999;
+}
+
+/* Optional hover effect for better interactivity */
+.nr-highlight:hover {
+    background-color: #ffd16666;
+}
