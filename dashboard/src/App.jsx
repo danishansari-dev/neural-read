@@ -1,4 +1,5 @@
 // NeuralRead v1.0.0 — Production 🚀
+// CI Trigger - Redeploy with Railway URL
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from './lib/supabase';
