@@ -1,8 +1,13 @@
 {
     "manifest_version": 3,
     "name": "NeuralRead",
-    "version": "1.0",
+    "version": "1.0.0",
     "description": "Auto-highlights important sentences on webpages and builds a personal knowledge graph.",
+    "icons": {
+        "16": "icon16.png",
+        "48": "icon48.png",
+        "128": "icon128.png"
+    },
     "permissions": [
         "storage",
         "activeTab",
@@ -10,8 +15,8 @@
         "tabs"
     ],
     "host_permissions": [
-        "http://localhost/*",
-        "https://neural-read-dashboard-git-main-danishs-projects-25aab0a7.vercel.app/*"
+        "https://neural-read-dashboard-fzl754h8p-danishs-projects-25aab0a7.vercel.app/*",
+        "https://neural-read-backend-production.up.railway.app/*"
     ],
     "background": {
         "service_worker": "background.js"
@@ -26,7 +31,7 @@
                 "https://localhost/*",
                 "http://127.0.0.1/*",
                 "https://127.0.0.1/*",
-                "https://neural-read-dashboard-git-main-danishs-projects-25aab0a7.vercel.app/*"
+                "https://neural-read-dashboard-fzl754h8p-danishs-projects-25aab0a7.vercel.app/*"
             ],
             "js": [
                 "config.js",
