@@ -1,8 +1,11 @@
 /**
  * Background service worker for NeuralRead extension.
  * Handles NLP extraction via backend API and session token storage from dashboard OAuth.
+ *
+ * Uses importScripts to load config.js — the only way to share code
+ * with a non-module service worker in MV3.
  */
-import { BACKEND_URL, TOKEN_KEY, MAX_HIGHLIGHTS } from './config.js';
+importScripts('config.js');
 
 try {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -13,12 +16,12 @@ try {
             // Handle async fetch inside the listener
             (async () => {
                 try {
-                    // Try to get auth token
-                    const { [TOKEN_KEY]: token } = await chrome.storage.local.get([TOKEN_KEY]);
+                    // Try to get auth token from chrome.storage
+                    const { [CONFIG.TOKEN_KEY]: token } = await chrome.storage.local.get([CONFIG.TOKEN_KEY]);
                     const headers = { 'Content-Type': 'application/json' };
                     if (token) headers['Authorization'] = `Bearer ${token}`;
 
-                    const res = await fetch(`${BACKEND_URL}/api/v1/extract`, {
+                    const res = await fetch(`${CONFIG.BACKEND_URL}/api/v1/extract`, {
                         method: 'POST',
                         headers,
                         body: JSON.stringify(message.payload)
@@ -34,11 +37,11 @@ try {
                     // Take top elements based on MAX_HIGHLIGHTS setting
                     const sentencesToHighlight = data.highlights
                         .map(h => h.sentence)
-                        .slice(0, MAX_HIGHLIGHTS);
+                        .slice(0, CONFIG.MAX_HIGHLIGHTS);
 
                     // If authenticated, save highlights to DB asynchronously
                     if (token) {
-                        fetch(`${BACKEND_URL}/api/v1/save`, {
+                        fetch(`${CONFIG.BACKEND_URL}/api/v1/save`, {
                             method: 'POST',
                             headers,
                             body: JSON.stringify({
@@ -58,17 +61,18 @@ try {
             return true; // Keep channel open for async response
         }
 
-        // Handle session token from dashboard after Google OAuth completes.
-        // The dashboard's content script sends this when the user lands on /vault
-        // after a successful Google sign-in.
-        if (message.type === 'SESSION_TOKEN' && message.token) {
-            console.log('Received session token from dashboard');
+        // Handle token storage from content script after dashboard Google OAuth.
+        // Content script detects the token in localStorage on the dashboard page
+        // and forwards it here for secure storage in chrome.storage.local.
+        if (message.type === 'STORE_TOKEN' && message.token) {
             chrome.storage.local.set({
-                [TOKEN_KEY]: message.token,
+                [CONFIG.TOKEN_KEY]: message.token,
                 user_email: message.email || 'Google User'
+            }).then(() => {
+                console.log('NeuralRead: token stored from dashboard login');
+                sendResponse({ success: true });
             });
-            sendResponse({ status: 'ok' });
-            return false;
+            return true; // async response
         }
     });
 } catch (error) {

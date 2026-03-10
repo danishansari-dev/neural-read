@@ -11,20 +11,24 @@ export default function Vault() {
     loadVault();
 
     // After Google OAuth redirect, send the session token to the extension
-    // so it can make authenticated API calls without a separate login step
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // via localStorage + custom event so content.js can forward it to background.js
+    const sendTokenToExtension = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       if (session?.access_token) {
-        try {
-          window.postMessage({
-            type: 'NEURAL_READ_SESSION',
+        // Store in localStorage so content script can read it on any page load
+        localStorage.setItem('nr_token', session.access_token);
+        localStorage.setItem('nr_user_email', session.user?.email || 'Google User');
+
+        // Also dispatch a custom event for immediate pickup by content script
+        window.dispatchEvent(new CustomEvent('NEURAL_READ_AUTH', {
+          detail: {
             token: session.access_token,
             email: session.user?.email
-          }, '*');
-        } catch (e) {
-          // Extension content script not injected on this page — safe to ignore
-        }
+          }
+        }));
       }
-    });
+    };
+    sendTokenToExtension();
   }, []);
 
   const loadVault = async () => {

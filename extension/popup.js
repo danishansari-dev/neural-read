@@ -1,8 +1,8 @@
 /**
  * Popup script for NeuralRead extension.
  * Handles toggle state, Google OAuth (opens dashboard), and email auth.
+ * CONFIG global is loaded from config.js via a <script> tag in popup.html.
  */
-import { BACKEND_URL, ENABLED_KEY, TOKEN_KEY } from './config.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const toggle = document.getElementById('enabled-toggle');
@@ -16,12 +16,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const errorMsg = document.getElementById('error-msg');
   const userEmailDisplay = document.getElementById('user-email');
 
-  // Load toggle state
-  const { [ENABLED_KEY]: isEnabled = true } = await chrome.storage.local.get(ENABLED_KEY);
+  // Load toggle state from chrome.storage
+  const { [CONFIG.ENABLED_KEY]: isEnabled = true } = await chrome.storage.local.get(CONFIG.ENABLED_KEY);
   toggle.checked = isEnabled;
 
   toggle.addEventListener('change', async (e) => {
-    await chrome.storage.local.set({ [ENABLED_KEY]: e.target.checked });
+    await chrome.storage.local.set({ [CONFIG.ENABLED_KEY]: e.target.checked });
   });
 
   /**
@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
    * Shows connected-view if token exists, auth-view otherwise.
    */
   const checkAuth = async () => {
-    const { [TOKEN_KEY]: token, user_email: email } = await chrome.storage.local.get([TOKEN_KEY, 'user_email']);
+    const { [CONFIG.TOKEN_KEY]: token, user_email: email } = await chrome.storage.local.get([CONFIG.TOKEN_KEY, 'user_email']);
     if (token && email) {
       authView.style.display = 'none';
       connectedView.style.display = 'block';
@@ -42,9 +42,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   await checkAuth();
 
-  // Google button opens the dashboard login page in a new tab
-  // The actual OAuth flow happens in the dashboard, which then
-  // sends the session token back to the extension via postMessage
+  // Poll for token every 2 seconds while popup is open.
+  // Catches the case where the user just completed Google login in another tab
+  // and the content script forwarded the token to background.js → chrome.storage.
+  const authPollInterval = setInterval(async () => {
+    const { [CONFIG.TOKEN_KEY]: token } = await chrome.storage.local.get(CONFIG.TOKEN_KEY);
+    if (token) {
+      clearInterval(authPollInterval);
+      await checkAuth();
+    }
+  }, 2000);
+
+  // Clean up poll when popup closes
+  window.addEventListener('unload', () => {
+    clearInterval(authPollInterval);
+  });
+
+  // Google button opens the dashboard login page in a new tab.
+  // The actual OAuth flow happens in the dashboard, which stores the token
+  // in localStorage. The content script running on that page picks it up
+  // and sends it to background.js for storage in chrome.storage.local.
   googleBtn.addEventListener('click', () => {
     chrome.tabs.create({ url: 'http://localhost:5173/login' });
   });
@@ -62,7 +79,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       // Direct call to FastAPI backend auth login route
       // Must match auth.py LoginRequest: JSON body with {email, password}
-      const res = await fetch(`${BACKEND_URL}/api/v1/auth/login`, {
+      const res = await fetch(`${CONFIG.BACKEND_URL}/api/v1/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -76,7 +93,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const data = await res.json();
       // Store token and email in chrome.storage for background.js to use
       await chrome.storage.local.set({ 
-        [TOKEN_KEY]: data.access_token,
+        [CONFIG.TOKEN_KEY]: data.access_token,
         user_email: email 
       });
       await checkAuth();
@@ -90,7 +107,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   logoutBtn.addEventListener('click', async () => {
-    await chrome.storage.local.remove([TOKEN_KEY, 'user_email']);
+    await chrome.storage.local.remove([CONFIG.TOKEN_KEY, 'user_email']);
     emailInput.value = '';
     passwordInput.value = '';
     await checkAuth();

@@ -1,8 +1,11 @@
 /**
  * Configuration variables for the NeuralRead extension.
- * Centralized API URLs and keys for easy environment swapping.
+ * Uses a plain global object (not ES modules) so it can be loaded
+ * via importScripts() in service workers and <script> in popup.
  */
-export const BACKEND_URL = 'http://localhost:8000';
-export const ENABLED_KEY = 'nr_enabled';
-export const TOKEN_KEY = 'nr_token';
-export const MAX_HIGHLIGHTS = 3;
+const CONFIG = {
+  BACKEND_URL: 'http://localhost:8000',
+  ENABLED_KEY: 'nr_enabled',
+  TOKEN_KEY: 'nr_token',
+  MAX_HIGHLIGHTS: 3
+};

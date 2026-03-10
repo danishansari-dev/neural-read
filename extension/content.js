@@ -2,6 +2,8 @@
  * Content script injected into webpages.
  * This exists to read the DOM, extract the main article text, and apply highlights
  * without requiring the user to manually trigger anything.
+ *
+ * CONFIG global is loaded from config.js via manifest.json content_scripts injection.
  */
 
 /**
@@ -259,8 +261,8 @@ function fallbackLocalScoring(text) {
  */
 async function initialize() {
     try {
-        const result = await chrome.storage.local.get(['nr_enabled']);
-        const isEnabled = result.nr_enabled === true;
+        const result = await chrome.storage.local.get([CONFIG.ENABLED_KEY]);
+        const isEnabled = result[CONFIG.ENABLED_KEY] === true;
 
         if (!isEnabled) {
             console.log("NeuralRead is currently disabled for this page.");
@@ -315,4 +317,31 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initialize);
 } else {
     initialize();
+}
+
+// ── Auth token bridge: dashboard → extension ──
+// Listen for the custom event dispatched by Vault.jsx after Google OAuth redirect
+window.addEventListener('NEURAL_READ_AUTH', (e) => {
+    if (e.detail?.token) {
+        chrome.runtime.sendMessage({
+            type: 'STORE_TOKEN',
+            token: e.detail.token,
+            email: e.detail.email
+        });
+    }
+});
+
+// Also check localStorage on dashboard pages — covers cases where
+// the custom event was missed (e.g. page was already loaded before content script)
+if (window.location.hostname === 'localhost' &&
+    window.location.port === '5173') {
+    const token = localStorage.getItem('nr_token');
+    const email = localStorage.getItem('nr_user_email');
+    if (token && email) {
+        chrome.runtime.sendMessage({
+            type: 'STORE_TOKEN',
+            token: token,
+            email: email
+        });
+    }
 }

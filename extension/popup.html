@@ -230,6 +230,8 @@
     <button id="logout-btn" class="secondary">Sign Out</button>
   </div>
 
-  <script type="module" src="popup.js"></script>
+  <!-- Load config.js first (sets global CONFIG), then popup.js -->
+  <script src="config.js"></script>
+  <script src="popup.js"></script>
 </body>
 </html>
