@@ -5,7 +5,7 @@
  */
 const CONFIG = {
   BACKEND_URL: 'https://neural-read-api.onrender.com',
-  DASHBOARD_URL: 'https://neural-read-dashboard-git-main-danishs-projects-25aab0a7.vercel.app',
+  DASHBOARD_URL: 'https://neural-read-dashboard-fzl754h8p-danishs-projects-25aab0a7.vercel.app',
   ENABLED_KEY: 'nr_enabled',
   TOKEN_KEY: 'nr_token',
   MAX_HIGHLIGHTS: 3
