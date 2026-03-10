@@ -19,12 +19,18 @@
             "matches": [
                 "<all_urls>"
             ],
-            "css": [
-                "styles.css"
+            "exclude_matches": [
+                "http://localhost/*",
+                "https://localhost/*",
+                "chrome://extensions/*",
+                "chrome-extension://*/*"
             ],
             "js": [
                 "config.js",
                 "content.js"
+            ],
+            "css": [
+                "styles.css"
             ]
         }
     ],

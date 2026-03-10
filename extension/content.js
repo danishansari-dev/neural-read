@@ -7,16 +7,73 @@
  */
 
 /**
- * Extracts the main article text from the current page using a simple paragraph scraper.
+ * Safe wrapper around chrome.runtime.sendMessage to gracefully handle
+ * "Extension context invalidated" errors that occur when the extension
+ * is reloaded while a tab's content script is still running.
+ * @param {object} message - The message payload to send.
+ * @param {Function} [callback] - Optional callback for the response.
+ */
+function safeSendMessage(message, callback) {
+    try {
+        // Quick check: if runtime.id is gone, the extension context is already dead
+        if (!chrome.runtime?.id) {
+            console.warn('NeuralRead: Extension reloaded. Refresh page to re-activate.');
+            return;
+        }
+        chrome.runtime.sendMessage(message, (response) => {
+            if (chrome.runtime.lastError) {
+                const err = chrome.runtime.lastError.message;
+                if (err.includes('Extension context invalidated') ||
+                    err.includes('Could not establish connection')) {
+                    console.warn('NeuralRead: Context lost, ignoring.');
+                    return;
+                }
+            }
+            if (callback) callback(response);
+        });
+    } catch (e) {
+        if (e.message?.includes('Extension context invalidated')) {
+            console.warn('NeuralRead: Context invalidated, ignoring.');
+        } else {
+            console.error('NeuralRead sendMessage error:', e);
+        }
+    }
+}
+
+/**
+ * Extracts the main article text from the current page.
+ * Uses a simple paragraph scraper with fallback selectors for sites
+ * like Britannica and Wikipedia that use non-standard layouts.
  * @returns {string} The extracted text content, joined by newlines.
  */
 function extractArticleText() {
     try {
-        // Simple heuristic: gather all paragraph elements.
-        // This is a naive approach; tricky logic might be needed later to filter out 
-        // nav bars, sidebars, or cookie notices.
-        const paragraphs = document.querySelectorAll('p');
+        let paragraphs = document.querySelectorAll('p');
         let extractedText = '';
+
+        // If few paragraphs found, try article-specific selectors
+        // to handle JS-heavy sites (Britannica, Wikipedia, news sites)
+        if (paragraphs.length < 3) {
+            const articleSelectors = [
+                'article p',
+                '[class*="article"] p',
+                '[class*="content"] p',
+                '[class*="body"] p',
+                'main p',
+                '.mw-parser-output p',       // Wikipedia
+                '[class*="ArticleBody"] p',  // Britannica
+                '[class*="article-body"] p',
+                '[data-testid*="article"] p'
+            ];
+
+            for (const selector of articleSelectors) {
+                const found = document.querySelectorAll(selector);
+                if (found.length >= 3) {
+                    paragraphs = found;
+                    break;
+                }
+            }
+        }
 
         paragraphs.forEach(p => {
             const text = p.textContent.trim();
@@ -28,8 +85,8 @@ function extractArticleText() {
 
         return extractedText;
     } catch (error) {
-        console.error("Failed to extract article text:", error);
-        return "";
+        console.error('Failed to extract article text:', error);
+        return '';
     }
 }
 
@@ -258,8 +315,19 @@ function fallbackLocalScoring(text) {
 
 /**
  * Main execution function to initialize the content script logic.
+ * Guarded against running on localhost/chrome pages as a double safety net
+ * alongside manifest.json exclude_matches.
  */
 async function initialize() {
+    // Never run on localhost (our own dashboard) or chrome pages
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' ||
+        hostname === '127.0.0.1' ||
+        window.location.protocol === 'chrome-extension:' ||
+        window.location.protocol === 'chrome:') {
+        return;
+    }
+
     try {
         const result = await chrome.storage.local.get([CONFIG.ENABLED_KEY]);
         const isEnabled = result[CONFIG.ENABLED_KEY] === true;
@@ -282,8 +350,8 @@ async function initialize() {
         // Indicate loading state
         injectOrUpdateBadge('...');
 
-        // Send to background for API processing
-        chrome.runtime.sendMessage(
+        // Send to background for API processing via safe wrapper
+        safeSendMessage(
             { 
                 type: 'EXTRACT', 
                 payload: { 
@@ -312,18 +380,55 @@ async function initialize() {
     }
 }
 
-// Ensure the DOM is fully loaded before trying to extract text to ensure we don't miss content
+// ── Smart initialization with retry for JS-rendered pages ──
+// Sites like Britannica render content via JS after DOMContentLoaded,
+// so we retry extraction a few times before giving up.
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 2000; // 2 seconds between retries
+
+/**
+ * Attempts to initialize NeuralRead, retrying if no text is found
+ * (handles JS-rendered pages that load content after initial parse).
+ * @param {number} retryCount - Current retry attempt number.
+ */
+async function initializeWithRetry(retryCount = 0) {
+    // Skip our own pages
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') return;
+
+    const text = extractArticleText();
+
+    if (!text && retryCount < MAX_RETRIES) {
+        console.log(`NeuralRead: No text found, retrying in ${RETRY_DELAY}ms... (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+        setTimeout(() => initializeWithRetry(retryCount + 1), RETRY_DELAY);
+        return;
+    }
+
+    if (!text) {
+        console.warn('NeuralRead: No extractable text after all retries. Skipping.');
+        return;
+    }
+
+    // Text found — run the main initialize logic
+    await initialize();
+}
+
+// ── Entry point ──
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initialize);
+    document.addEventListener('DOMContentLoaded', () => {
+        // Wait 1s after DOM ready for initial JS rendering
+        setTimeout(() => initializeWithRetry(), 1000);
+    });
 } else {
-    initialize();
+    // Page already loaded — wait 1.5s for JS to render content
+    setTimeout(() => initializeWithRetry(), 1500);
 }
 
 // ── Auth token bridge: dashboard → extension ──
 // Listen for the custom event dispatched by Vault.jsx after Google OAuth redirect
 window.addEventListener('NEURAL_READ_AUTH', (e) => {
     if (e.detail?.token) {
-        chrome.runtime.sendMessage({
+        safeSendMessage({
             type: 'STORE_TOKEN',
             token: e.detail.token,
             email: e.detail.email
@@ -338,7 +443,7 @@ if (window.location.hostname === 'localhost' &&
     const token = localStorage.getItem('nr_token');
     const email = localStorage.getItem('nr_user_email');
     if (token && email) {
-        chrome.runtime.sendMessage({
+        safeSendMessage({
             type: 'STORE_TOKEN',
             token: token,
             email: email
