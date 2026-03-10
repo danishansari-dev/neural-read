@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import nltk
+import os
 from routers import highlights, auth
 
 # Download required NLTK data on startup
@@ -15,11 +16,8 @@ except Exception as e:
 app = FastAPI(title="NeuralRead API")
 
 # Configure CORS
-origins = [
-    "chrome-extension://*", # Allow any chrome extension for local dev
-    "http://localhost:5173", # Vite dev server
-    "*" # Fallback for dev
-]
+allowed_origins_env = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173")
+origins = allowed_origins_env.split(",")
 
 app.add_middleware(
     CORSMiddleware,
@@ -35,4 +33,8 @@ app.include_router(highlights.router, prefix="/api/v1", tags=["highlights"])
 
 @app.get("/")
 async def root():
+    return {"status": "ok", "service": "NeuralRead API"}
+
+@app.get("/health")
+async def health_check():
     return {"status": "ok", "service": "NeuralRead API"}
