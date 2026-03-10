@@ -6,6 +6,7 @@ import Vault from './pages/Vault';
 import Graph from './pages/Graph';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
+import HealthCheck from './components/HealthCheck';
 
 function App() {
   const [session, setSession] = useState(null);
@@ -49,6 +50,7 @@ function App() {
 
   return (
     <Router>
+      <HealthCheck />
       <Routes>
         <Route path="/login" element={!session ? <Login /> : <Navigate to="/vault" />} />
 
