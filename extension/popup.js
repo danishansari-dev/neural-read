@@ -48,11 +48,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     btn.disabled = true;
 
     try {
-      // Direct call to FastAPI backend auth token route
-      const res = await fetch(`${BACKEND_URL}/api/v1/auth/token`, {
+      // Direct call to FastAPI backend auth login route
+      // Must match auth.py LoginRequest: JSON body with {email, password}
+      const res = await fetch(`${BACKEND_URL}/api/v1/auth/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ username: email, password: password })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
       });
 
       if (!res.ok) {
