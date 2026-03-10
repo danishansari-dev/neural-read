@@ -1,3 +1,4 @@
+// NeuralRead v1.0.0 — Production 🚀
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from './lib/supabase';
@@ -16,6 +17,9 @@ function App() {
     // Grab session on mount — handles page reloads and OAuth redirects
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      setLoading(false);
+    }).catch(err => {
+      console.error("Auth session error:", err);
       setLoading(false);
     });
 
