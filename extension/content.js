@@ -285,7 +285,7 @@ async function initialize() {
             { 
                 type: 'EXTRACT', 
                 payload: { 
-                    content: text,
+                    text: text,
                     url: window.location.href,
                     title: document.title
                 } 

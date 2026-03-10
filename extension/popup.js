@@ -1,3 +1,9 @@
+/**
+ * Popup script for NeuralRead extension.
+ * Handles toggle state and auth UI using ES module imports.
+ */
+import { BACKEND_URL, ENABLED_KEY, TOKEN_KEY } from './config.js';
+
 document.addEventListener('DOMContentLoaded', async () => {
   const toggle = document.getElementById('enabled-toggle');
   const authView = document.getElementById('auth-view');
