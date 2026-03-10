@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // in localStorage. The content script running on that page picks it up
   // and sends it to background.js for storage in chrome.storage.local.
   googleBtn.addEventListener('click', () => {
-    chrome.tabs.create({ url: 'http://localhost:5173/login' });
+    chrome.tabs.create({ url: 'https://neural-read-dashboard-git-main-danishs-projects-25aab0a7.vercel.app/login' });
   });
 
   // Email/password sign-in via backend API

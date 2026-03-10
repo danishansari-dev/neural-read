@@ -319,10 +319,14 @@ function fallbackLocalScoring(text) {
  * alongside manifest.json exclude_matches.
  */
 async function initialize() {
-    // Never run on localhost (our own dashboard) or chrome pages
+    // Never run on localhost (our own dashboard), chrome pages, or Vercel production dashboard
     const hostname = window.location.hostname;
-    if (hostname === 'localhost' ||
-        hostname === '127.0.0.1' ||
+    const EXCLUDED_HOSTS = [
+        'localhost',
+        '127.0.0.1',
+        'neural-read-dashboard-git-main-danishs-projects-25aab0a7.vercel.app'
+    ];
+    if (EXCLUDED_HOSTS.some(h => hostname.includes(h)) ||
         window.location.protocol === 'chrome-extension:' ||
         window.location.protocol === 'chrome:') {
         return;
@@ -394,7 +398,12 @@ const RETRY_DELAY = 2000; // 2 seconds between retries
 async function initializeWithRetry(retryCount = 0) {
     // Skip our own pages
     const hostname = window.location.hostname;
-    if (hostname === 'localhost' || hostname === '127.0.0.1') return;
+    const EXCLUDED_HOSTS = [
+        'localhost',
+        '127.0.0.1',
+        'neural-read-dashboard-git-main-danishs-projects-25aab0a7.vercel.app'
+    ];
+    if (EXCLUDED_HOSTS.some(h => hostname.includes(h))) return;
 
     const text = extractArticleText();
 
@@ -423,5 +432,3 @@ if (document.readyState === 'loading') {
     // Page already loaded — wait 1.5s for JS to render content
     setTimeout(() => initializeWithRetry(), 1500);
 }
-
-

@@ -10,7 +10,8 @@
         "tabs"
     ],
     "host_permissions": [
-        "http://localhost/*"
+        "http://localhost/*",
+        "https://neural-read-dashboard-git-main-danishs-projects-25aab0a7.vercel.app/*"
     ],
     "background": {
         "service_worker": "background.js"
@@ -24,7 +25,8 @@
                 "http://localhost/*",
                 "https://localhost/*",
                 "http://127.0.0.1/*",
-                "https://127.0.0.1/*"
+                "https://127.0.0.1/*",
+                "https://neural-read-dashboard-git-main-danishs-projects-25aab0a7.vercel.app/*"
             ],
             "js": [
                 "config.js",
