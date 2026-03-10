@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { fetchHighlights } from '../lib/api';
+import { supabase } from '../lib/supabase';
 
 export default function Vault() {
   const [highlights, setHighlights] = useState([]);
@@ -8,6 +9,22 @@ export default function Vault() {
 
   useEffect(() => {
     loadVault();
+
+    // After Google OAuth redirect, send the session token to the extension
+    // so it can make authenticated API calls without a separate login step
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.access_token) {
+        try {
+          window.postMessage({
+            type: 'NEURAL_READ_SESSION',
+            token: session.access_token,
+            email: session.user?.email
+          }, '*');
+        } catch (e) {
+          // Extension content script not injected on this page — safe to ignore
+        }
+      }
+    });
   }, []);
 
   const loadVault = async () => {

@@ -1,10 +1,12 @@
 /**
  * Background service worker for NeuralRead extension.
+ * Handles NLP extraction via backend API and session token storage from dashboard OAuth.
  */
 import { BACKEND_URL, TOKEN_KEY, MAX_HIGHLIGHTS } from './config.js';
 
 try {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+        // Handle NLP extraction requests from content script
         if (message.type === 'EXTRACT') {
             console.log('Extract request from tab:', sender.tab?.id);
             
@@ -54,6 +56,19 @@ try {
                 }
             })();
             return true; // Keep channel open for async response
+        }
+
+        // Handle session token from dashboard after Google OAuth completes.
+        // The dashboard's content script sends this when the user lands on /vault
+        // after a successful Google sign-in.
+        if (message.type === 'SESSION_TOKEN' && message.token) {
+            console.log('Received session token from dashboard');
+            chrome.storage.local.set({
+                [TOKEN_KEY]: message.token,
+                user_email: message.email || 'Google User'
+            });
+            sendResponse({ status: 'ok' });
+            return false;
         }
     });
 } catch (error) {

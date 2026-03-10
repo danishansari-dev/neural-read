@@ -12,11 +12,13 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Grab session on mount — handles page reloads and OAuth redirects
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
     });
 
+    // Listen for auth changes (login, logout, token refresh, OAuth callback)
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -26,17 +28,34 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Premium-styled loading screen while checking auth state
   if (loading) {
-    return <div className="login-container glow-text">Loading NeuralRead...</div>;
+    return (
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100vh',
+        background: '#0c0c0e',
+        color: '#ffd166',
+        fontFamily: 'monospace',
+        fontSize: 14,
+        gap: '8px'
+      }}>
+        ⬡ Loading NeuralRead...
+      </div>
+    );
   }
 
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={!session ? <Login /> : <Navigate to="/" />} />
-        
+        <Route path="/login" element={!session ? <Login /> : <Navigate to="/vault" />} />
+
+        {/* Protected routes — redirect to login if no session */}
         <Route path="/" element={session ? <Layout /> : <Navigate to="/login" />}>
-          <Route index element={<Vault />} />
+          <Route index element={<Navigate to="/vault" />} />
+          <Route path="vault" element={<Vault />} />
           <Route path="graph" element={<Graph />} />
           <Route path="settings" element={<Settings />} />
         </Route>

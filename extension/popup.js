@@ -1,6 +1,6 @@
 /**
  * Popup script for NeuralRead extension.
- * Handles toggle state and auth UI using ES module imports.
+ * Handles toggle state, Google OAuth (opens dashboard), and email auth.
  */
 import { BACKEND_URL, ENABLED_KEY, TOKEN_KEY } from './config.js';
 
@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const connectedView = document.getElementById('connected-view');
   const loginForm = document.getElementById('login-form');
   const logoutBtn = document.getElementById('logout-btn');
+  const googleBtn = document.getElementById('google-btn');
   const emailInput = document.getElementById('email');
   const passwordInput = document.getElementById('password');
   const errorMsg = document.getElementById('error-msg');
@@ -23,7 +24,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     await chrome.storage.local.set({ [ENABLED_KEY]: e.target.checked });
   });
 
-  // Check auth state by existence of token
+  /**
+   * Checks chrome.storage for an existing auth token and updates the UI.
+   * Shows connected-view if token exists, auth-view otherwise.
+   */
   const checkAuth = async () => {
     const { [TOKEN_KEY]: token, user_email: email } = await chrome.storage.local.get([TOKEN_KEY, 'user_email']);
     if (token && email) {
@@ -38,6 +42,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   await checkAuth();
 
+  // Google button opens the dashboard login page in a new tab
+  // The actual OAuth flow happens in the dashboard, which then
+  // sends the session token back to the extension via postMessage
+  googleBtn.addEventListener('click', () => {
+    chrome.tabs.create({ url: 'http://localhost:5173/login' });
+  });
+
+  // Email/password sign-in via backend API
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     errorMsg.textContent = '';
@@ -62,7 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       const data = await res.json();
-      // Store token and arbitrary generic email
+      // Store token and email in chrome.storage for background.js to use
       await chrome.storage.local.set({ 
         [TOKEN_KEY]: data.access_token,
         user_email: email 
