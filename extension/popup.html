@@ -1,107 +1,173 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NeuralRead Popup</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            width: 250px;
-            margin: 0;
-            padding: 16px;
-            background-color: #1a1a1a;
-            color: #ffffff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        h1 {
-            font-size: 16px;
-            margin: 0 0 16px 0;
-            font-weight: 500;
-        }
-        /* Toggle Switch Styling */
-        .toggle-container {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%;
-        }
-        .toggle-label {
-            font-size: 14px;
-            color: #ccc;
-        }
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 40px;
-            height: 24px;
-        }
-        .switch input { 
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #444;
-            transition: .4s;
-            border-radius: 24px;
-        }
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-        input:checked + .slider {
-            background-color: #ffd166;
-        }
-        input:checked + .slider:before {
-            transform: translateX(16px);
-            background-color: #1a1a1a;
-        }
-        /* For loading and error states */
-        .status-message {
-            font-size: 12px;
-            margin-top: 12px;
-            text-align: center;
-        }
-        .error-message {
-            color: #ff6b6b;
-            display: none;
-        }
-        .loading {
-            color: #ffd166;
-            display: none;
-        }
-    </style>
+  <meta charset="utf-8">
+  <title>NeuralRead</title>
+  <style>
+    body {
+      width: 300px;
+      margin: 0;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #1a1a1a;
+      color: #e2e8f0;
+    }
+    h2 {
+      margin-top: 0;
+      margin-bottom: 4px;
+      color: #ffd166;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    p {
+      color: #a0aec0;
+      font-size: 13px;
+      line-height: 1.4;
+      margin-bottom: 16px;
+    }
+    .status-box {
+      background: #2d3748;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+    }
+    .form-group {
+      margin-bottom: 12px;
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 4px;
+      color: #cbd5e1;
+    }
+    input[type="email"], input[type="password"] {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px;
+      background: #334155;
+      border: 1px solid #475569;
+      color: white;
+      border-radius: 4px;
+    }
+    button.primary {
+      width: 100%;
+      padding: 10px;
+      background: #ffd166;
+      color: #111;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+    button.primary:hover {
+      background: #ffdb80;
+    }
+    button.secondary {
+      width: 100%;
+      padding: 8px;
+      background: transparent;
+      color: #a0aec0;
+      border: 1px solid #475569;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    button.secondary:hover {
+      background: #334155;
+    }
+    .error {
+      color: #ff6b6b;
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    /* Toggle Switch CSS */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 20px;
+    }
+    .switch input { 
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #475569;
+      transition: .4s;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: .4s;
+    }
+    input:checked + .slider {
+      background-color: #ffd166;
+    }
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+    .slider.round {
+      border-radius: 20px;
+    }
+    .slider.round:before {
+      border-radius: 50%;
+    }
+  </style>
 </head>
 <body>
-    <h1>NeuralRead Active</h1>
-    
-    <div class="toggle-container">
-        <span class="toggle-label" id="statusText">Loading...</span>
-        <label class="switch">
-            <input type="checkbox" id="toggleSwitch" disabled>
-            <span class="slider"></span>
-        </label>
-    </div>
-    
-    <div id="errorMessage" class="status-message error-message">Error loading status.</div>
-    <div id="loadingMessage" class="status-message loading">Saving state...</div>
+  <h2>✦ NeuralRead</h2>
+  
+  <div class="toggle-row">
+    <span>Enable AI Highlights</span>
+    <label class="switch">
+      <input type="checkbox" id="enabled-toggle" checked>
+      <span class="slider round"></span>
+    </label>
+  </div>
 
-    <script src="popup.js"></script>
+  <div id="auth-view" style="display: none;">
+    <p>Sign in to sync your highlights to the NeuralRead knowledge graph.</p>
+    <div id="error-msg" class="error"></div>
+    <form id="login-form">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="email" required>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="password" required>
+      </div>
+      <button type="submit" class="primary" id="login-btn">Sign In</button>
+    </form>
+  </div>
+
+  <div id="connected-view" style="display: none;">
+    <div class="status-box">
+      <div style="font-size: 12px; color: #a0aec0; margin-bottom: 4px;">Connected as</div>
+      <div id="user-email" style="font-weight: bold; overflow: hidden; text-overflow: ellipsis;">user@example.com</div>
+    </div>
+    <button id="logout-btn" class="secondary">Sign Out</button>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="popup.js"></script>
 </body>
 </html>

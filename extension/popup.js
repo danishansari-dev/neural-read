@@ -1,62 +1,79 @@
-/**
- * Popup script for NeuralRead extension.
- * This exists to handle the UI interactions in the extension popup window, allowing the user
- * to toggle the main extension functionality on and off via chrome.storage.local.
- */
-
 document.addEventListener('DOMContentLoaded', async () => {
-    const toggleSwitch = document.getElementById('toggleSwitch');
-    const statusText = document.getElementById('statusText');
-    const errorMessage = document.getElementById('errorMessage');
-    const loadingMessage = document.getElementById('loadingMessage');
+  const toggle = document.getElementById('enabled-toggle');
+  const authView = document.getElementById('auth-view');
+  const connectedView = document.getElementById('connected-view');
+  const loginForm = document.getElementById('login-form');
+  const logoutBtn = document.getElementById('logout-btn');
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
+  const errorMsg = document.getElementById('error-msg');
+  const userEmailDisplay = document.getElementById('user-email');
 
-    /**
-     * Updates the UI to show an error state
-     * @param {string} msg - The error message to display
-     */
-    function showError(msg) {
-        errorMessage.textContent = msg;
-        errorMessage.style.display = 'block';
-        loadingMessage.style.display = 'none';
+  // Load toggle state
+  const { [ENABLED_KEY]: isEnabled = true } = await chrome.storage.local.get(ENABLED_KEY);
+  toggle.checked = isEnabled;
+
+  toggle.addEventListener('change', async (e) => {
+    await chrome.storage.local.set({ [ENABLED_KEY]: e.target.checked });
+  });
+
+  // Check auth state by existence of token
+  const checkAuth = async () => {
+    const { [TOKEN_KEY]: token, user_email: email } = await chrome.storage.local.get([TOKEN_KEY, 'user_email']);
+    if (token && email) {
+      authView.style.display = 'none';
+      connectedView.style.display = 'block';
+      userEmailDisplay.textContent = email;
+    } else {
+      authView.style.display = 'block';
+      connectedView.style.display = 'none';
     }
+  };
+
+  await checkAuth();
+
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorMsg.textContent = '';
+    const email = emailInput.value;
+    const password = passwordInput.value;
+    const btn = document.getElementById('login-btn');
+    btn.textContent = 'Authenticating...';
+    btn.disabled = true;
 
     try {
-        // Initialize state from chrome.storage.local
-        const result = await chrome.storage.local.get(['isActive']);
-        // Default to active if not set previously
-        const isActive = result.isActive !== false;
+      // Direct call to FastAPI backend auth token route
+      const res = await fetch(`${BACKEND_URL}/api/v1/auth/token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ username: email, password: password })
+      });
 
-        // Setup initial UI state
-        toggleSwitch.checked = isActive;
-        statusText.textContent = isActive ? 'Enabled' : 'Disabled';
-        toggleSwitch.disabled = false; // Enable the checkbox once state is loaded
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Authentication failed');
+      }
 
-        // Add listener for toggle changes
-        toggleSwitch.addEventListener('change', async (event) => {
-            try {
-                // Show loading indicator
-                errorMessage.style.display = 'none';
-                loadingMessage.style.display = 'block';
-                toggleSwitch.disabled = true; // Prevent rapid clicking
+      const data = await res.json();
+      // Store token and arbitrary generic email
+      await chrome.storage.local.set({ 
+        [TOKEN_KEY]: data.access_token,
+        user_email: email 
+      });
+      await checkAuth();
 
-                const newState = event.target.checked;
-
-                // Save new state
-                await chrome.storage.local.set({ isActive: newState });
-
-                statusText.textContent = newState ? 'Enabled' : 'Disabled';
-            } catch (err) {
-                console.error("Error saving toggle state:", err);
-                showError("Failed to save state.");
-                // Revert UI on failure
-                toggleSwitch.checked = !event.target.checked;
-            } finally {
-                loadingMessage.style.display = 'none';
-                toggleSwitch.disabled = false;
-            }
-        });
     } catch (err) {
-        console.error("Error initializing popup:", err);
-        showError("Failed to load extension state.");
+      errorMsg.textContent = err.message;
+    } finally {
+      btn.textContent = 'Sign In';
+      btn.disabled = false;
     }
+  });
+
+  logoutBtn.addEventListener('click', async () => {
+    await chrome.storage.local.remove([TOKEN_KEY, 'user_email']);
+    emailInput.value = '';
+    passwordInput.value = '';
+    await checkAuth();
+  });
 });

@@ -208,16 +208,50 @@ function wrapRangeTextNodes(range) {
 }
 
 /**
- * Injects a floating badge into the page indicating the number of highlights.
- * @param {number} count - The number of active highlights on the page.
+ * Injects or updates a floating badge into the page.
+ * @param {string|number} text - The text to display (e.g., number of highlights, '...', '!').
+ * @param {boolean} isFallback - Whether this is a local fallback (changes badge style).
  */
-function injectBadge(count) {
-    // We add a UI indicator so the user knows the extension actually did something,
-    // especially on long pages where highlights might be below the fold.
-    const badge = document.createElement('div');
-    badge.className = 'nr-badge';
-    badge.textContent = `✦ ${count} highlights`;
-    document.body.appendChild(badge);
+function injectOrUpdateBadge(text, isFallback = false) {
+    let badge = document.querySelector('.nr-badge');
+    if (!badge) {
+        badge = document.createElement('div');
+        badge.className = 'nr-badge';
+        document.body.appendChild(badge);
+    }
+    
+    if (text === '...') {
+        badge.textContent = '✦ Analyzing...';
+        badge.style.opacity = '0.7';
+    } else if (text === '!') {
+        badge.textContent = '✦ Error';
+        badge.style.color = '#ff6b6b';
+        badge.style.borderColor = '#ff6b6b';
+    } else {
+        badge.textContent = `✦ ${text} highlights${isFallback ? ' (local)' : ''}`;
+        badge.style.opacity = '1';
+        if (isFallback) {
+            badge.style.color = '#aaa';
+            badge.style.borderColor = '#aaa';
+        }
+    }
+}
+
+/**
+ * Runs the simple local heuristic scoring if the backend is unavailable.
+ */
+function fallbackLocalScoring(text) {
+    console.log("NeuralRead: Running local scoring fallback...");
+    const sentences = splitIntoSentences(text);
+    const scoredSentences = sentences.map(s => ({
+        text: s,
+        score: scoreSentence(s)
+    }));
+    scoredSentences.sort((a, b) => b.score - a.score);
+    const top3 = scoredSentences.slice(0, 3).map(s => s.text);
+    
+    const count = highlightSentencesInDOM(top3);
+    injectOrUpdateBadge(count, true);
 }
 
 /**
@@ -225,60 +259,54 @@ function injectBadge(count) {
  */
 async function initialize() {
     try {
-        // Check if the extension is enabled globally before continuing using chrome.storage.local
         const result = await chrome.storage.local.get(['nr_enabled']);
         const isEnabled = result.nr_enabled === true;
 
         if (!isEnabled) {
             console.log("NeuralRead is currently disabled for this page.");
-            // We could optionally show a small loading state here if we were doing async validation
             return;
         }
 
         console.log("NeuralRead Active: Extracting text...");
         const text = extractArticleText();
 
-        if (text) {
-            console.log("NeuralRead Extracted Text Summary:", text.substring(0, 300) + '...');
-
-            // 1. Split into sentences
-            const sentences = splitIntoSentences(text);
-
-            // 2. Score sentences
-            const scoredSentences = sentences.map(s => ({
-                text: s,
-                score: scoreSentence(s)
-            }));
-
-            // 3. Pick top 3 by score
-            scoredSentences.sort((a, b) => b.score - a.score);
-            const top3 = scoredSentences.slice(0, 3).map(s => s.text);
-
-            // 4 & 5. Find sentences in DOM and wrap in <mark>
-            const highlightedCount = highlightSentencesInDOM(top3);
-
-            // 6. Add floating badge if we highlighted anything
-            if (highlightedCount > 0) {
-                injectBadge(highlightedCount);
-            }
-
-            // Send extracted text to background script for further processing
-            chrome.runtime.sendMessage(
-                { type: 'CONTENT_EXTRACTED', payload: text },
-                (response) => {
-                    if (chrome.runtime.lastError) {
-                        console.warn("Message sending failed:", chrome.runtime.lastError.message);
-                        // This happens if the background worker hasn't woken up or is unavailable
-                    } else {
-                        console.log("Background response:", response);
-                    }
-                }
-            );
-        } else {
+        if (!text) {
             console.warn("NeuralRead: No text extracted from this page.");
+            return;
         }
+
+        console.log("NeuralRead Extracted Text Summary:", text.substring(0, 300) + '...');
+        
+        // Indicate loading state
+        injectOrUpdateBadge('...');
+
+        // Send to background for API processing
+        chrome.runtime.sendMessage(
+            { 
+                type: 'EXTRACT', 
+                payload: { 
+                    content: text,
+                    url: window.location.href,
+                    title: document.title
+                } 
+            },
+            (response) => {
+                if (chrome.runtime.lastError || !response || response.status === 'error') {
+                    console.warn("Backend extraction failed, falling back to local scoring:", 
+                                 chrome.runtime.lastError?.message || response?.error);
+                    fallbackLocalScoring(text);
+                } else if (response.highlights) {
+                    console.log("Received highlights from backend:", response.highlights);
+                    const count = highlightSentencesInDOM(response.highlights);
+                    injectOrUpdateBadge(count, false);
+                } else {
+                    injectOrUpdateBadge('!');
+                }
+            }
+        );
     } catch (error) {
         console.error("Error initializing NeuralRead content script:", error);
+        injectOrUpdateBadge('!');
     }
 }
 

@@ -1,23 +1,61 @@
 /**
  * Background service worker for NeuralRead extension.
- * This exists to handle events that need to persist independently of web pages,
- * such as keeping track of extension state, or communicating with the backend API.
  */
+import { BACKEND_URL, TOKEN_KEY, MAX_HIGHLIGHTS } from './config.js';
 
 try {
-    // Listen for messages from content scripts or popup
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-        // We respond asynchronously so we must return true from the listener
-        if (message.type === 'CONTENT_EXTRACTED') {
-            console.log('Received extracted content from tab:', sender.tab?.id);
+        if (message.type === 'EXTRACT') {
+            console.log('Extract request from tab:', sender.tab?.id);
+            
+            // Handle async fetch inside the listener
+            (async () => {
+                try {
+                    // Try to get auth token
+                    const { [TOKEN_KEY]: token } = await chrome.storage.local.get([TOKEN_KEY]);
+                    const headers = { 'Content-Type': 'application/json' };
+                    if (token) headers['Authorization'] = `Bearer ${token}`;
 
-            // TODO: Send data to the backend for TextRank processing and embedding generation
-            // We'll wrap this in an async operation once the backend is ready
+                    const res = await fetch(`${BACKEND_URL}/api/v1/extract`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify(message.payload)
+                    });
 
-            sendResponse({ status: 'success', message: 'Content received by background worker' });
+                    if (!res.ok) throw new Error(`API Error: ${res.status}`);
+                    
+                    const data = await res.json();
+                    if (!data.highlights || !Array.isArray(data.highlights)) {
+                        throw new Error('Invalid highlight data returned from API');
+                    }
+                    
+                    // Take top elements based on MAX_HIGHLIGHTS setting
+                    const sentencesToHighlight = data.highlights
+                        .map(h => h.sentence)
+                        .slice(0, MAX_HIGHLIGHTS);
+
+                    // If authenticated, save highlights to DB asynchronously
+                    if (token) {
+                        fetch(`${BACKEND_URL}/api/v1/save`, {
+                            method: 'POST',
+                            headers,
+                            body: JSON.stringify({
+                                url: message.payload.url,
+                                title: message.payload.title,
+                                highlights: sentencesToHighlight
+                            })
+                        }).catch(e => console.error("Optional save failure:", e));
+                    }
+
+                    sendResponse({ status: 'success', highlights: sentencesToHighlight });
+                } catch (err) {
+                    console.error("Backend extraction failed:", err);
+                    sendResponse({ status: 'error', error: err.message });
+                }
+            })();
+            return true; // Keep channel open for async response
         }
-        return true;
     });
 } catch (error) {
-    console.error("Error setting up background service worker:", error);
+    console.error("Error setting up background worker:", error);
 }
