@@ -87,35 +87,54 @@ try {
 /** Dashboard URL pattern to watch for — matches the Vite dev server */
 const DASHBOARD_PATTERN = 'http://localhost:5173';
 
+/**
+ * Attempts to read auth token from a dashboard tab's localStorage.
+ * Retries multiple times because Supabase getSession() is async and
+ * may not have resolved + written to localStorage immediately on page load.
+ * @param {number} tabId - The tab to inject into.
+ * @param {number} attempt - Current attempt number (0-indexed).
+ */
+function tryReadDashboardToken(tabId, attempt = 0) {
+    const MAX_ATTEMPTS = 5;
+    const RETRY_DELAY = 2000; // 2 seconds between attempts
+
+    chrome.scripting.executeScript({
+        target: { tabId },
+        func: () => {
+            // This runs in the context of the dashboard page
+            return {
+                token: localStorage.getItem('nr_token'),
+                email: localStorage.getItem('nr_user_email')
+            };
+        }
+    }).then((results) => {
+        const data = results?.[0]?.result;
+        if (data?.token) {
+            chrome.storage.local.set({
+                [CONFIG.TOKEN_KEY]: data.token,
+                user_email: data.email || 'Google User'
+            }).then(() => {
+                console.log('NeuralRead: token captured from dashboard tab');
+            });
+        } else if (attempt < MAX_ATTEMPTS - 1) {
+            // Token not in localStorage yet — Supabase may still be processing
+            console.log(`NeuralRead: No token yet, retrying... (${attempt + 1}/${MAX_ATTEMPTS})`);
+            setTimeout(() => tryReadDashboardToken(tabId, attempt + 1), RETRY_DELAY);
+        } else {
+            console.warn('NeuralRead: Could not find token in dashboard after all retries.');
+        }
+    }).catch(err => {
+        // Tab may have navigated away, been closed, or we lack permissions
+        console.warn('NeuralRead: Could not read dashboard token:', err.message);
+    });
+}
+
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     // Only act when a dashboard tab finishes loading
     if (changeInfo.status !== 'complete') return;
     if (!tab.url || !tab.url.startsWith(DASHBOARD_PATTERN)) return;
 
-    // Small delay to let Vault.jsx's useEffect run and write to localStorage
-    setTimeout(() => {
-        chrome.scripting.executeScript({
-            target: { tabId },
-            func: () => {
-                // This runs in the context of the dashboard page
-                return {
-                    token: localStorage.getItem('nr_token'),
-                    email: localStorage.getItem('nr_user_email')
-                };
-            }
-        }).then((results) => {
-            const data = results?.[0]?.result;
-            if (data?.token) {
-                chrome.storage.local.set({
-                    [CONFIG.TOKEN_KEY]: data.token,
-                    user_email: data.email || 'Google User'
-                }).then(() => {
-                    console.log('NeuralRead: token captured from dashboard tab');
-                });
-            }
-        }).catch(err => {
-            // Silently ignore — tab may have navigated away or been closed
-            console.warn('NeuralRead: Could not read dashboard token:', err.message);
-        });
-    }, 1500);
+    // Initial delay to let React mount and Vault.jsx useEffect fire
+    setTimeout(() => tryReadDashboardToken(tabId), 1500);
 });
+
