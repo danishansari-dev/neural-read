@@ -78,3 +78,44 @@ try {
 } catch (error) {
     console.error("Error setting up background worker:", error);
 }
+
+// ── Auth token bridge: detect dashboard tab loads and read token from localStorage ──
+// Since content scripts are excluded from localhost (to avoid highlighting the dashboard),
+// we use chrome.scripting.executeScript to inject a tiny token-reader when the dashboard loads.
+// This fires after Google OAuth redirects back to /vault.
+
+/** Dashboard URL pattern to watch for — matches the Vite dev server */
+const DASHBOARD_PATTERN = 'http://localhost:5173';
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    // Only act when a dashboard tab finishes loading
+    if (changeInfo.status !== 'complete') return;
+    if (!tab.url || !tab.url.startsWith(DASHBOARD_PATTERN)) return;
+
+    // Small delay to let Vault.jsx's useEffect run and write to localStorage
+    setTimeout(() => {
+        chrome.scripting.executeScript({
+            target: { tabId },
+            func: () => {
+                // This runs in the context of the dashboard page
+                return {
+                    token: localStorage.getItem('nr_token'),
+                    email: localStorage.getItem('nr_user_email')
+                };
+            }
+        }).then((results) => {
+            const data = results?.[0]?.result;
+            if (data?.token) {
+                chrome.storage.local.set({
+                    [CONFIG.TOKEN_KEY]: data.token,
+                    user_email: data.email || 'Google User'
+                }).then(() => {
+                    console.log('NeuralRead: token captured from dashboard tab');
+                });
+            }
+        }).catch(err => {
+            // Silently ignore — tab may have navigated away or been closed
+            console.warn('NeuralRead: Could not read dashboard token:', err.message);
+        });
+    }, 1500);
+});

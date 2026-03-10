@@ -424,29 +424,4 @@ if (document.readyState === 'loading') {
     setTimeout(() => initializeWithRetry(), 1500);
 }
 
-// ── Auth token bridge: dashboard → extension ──
-// Listen for the custom event dispatched by Vault.jsx after Google OAuth redirect
-window.addEventListener('NEURAL_READ_AUTH', (e) => {
-    if (e.detail?.token) {
-        safeSendMessage({
-            type: 'STORE_TOKEN',
-            token: e.detail.token,
-            email: e.detail.email
-        });
-    }
-});
 
-// Also check localStorage on dashboard pages — covers cases where
-// the custom event was missed (e.g. page was already loaded before content script)
-if (window.location.hostname === 'localhost' &&
-    window.location.port === '5173') {
-    const token = localStorage.getItem('nr_token');
-    const email = localStorage.getItem('nr_user_email');
-    if (token && email) {
-        safeSendMessage({
-            type: 'STORE_TOKEN',
-            token: token,
-            email: email
-        });
-    }
-}

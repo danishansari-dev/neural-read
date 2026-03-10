@@ -10,22 +10,13 @@ export default function Vault() {
   useEffect(() => {
     loadVault();
 
-    // After Google OAuth redirect, send the session token to the extension
-    // via localStorage + custom event so content.js can forward it to background.js
+    // After Google OAuth redirect, store the session token in localStorage
+    // so the extension's background.js can pick it up via chrome.scripting.executeScript
     const sendTokenToExtension = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.access_token) {
-        // Store in localStorage so content script can read it on any page load
         localStorage.setItem('nr_token', session.access_token);
         localStorage.setItem('nr_user_email', session.user?.email || 'Google User');
-
-        // Also dispatch a custom event for immediate pickup by content script
-        window.dispatchEvent(new CustomEvent('NEURAL_READ_AUTH', {
-          detail: {
-            token: session.access_token,
-            email: session.user?.email
-          }
-        }));
       }
     };
     sendTokenToExtension();
