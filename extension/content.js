@@ -405,6 +405,10 @@ async function initializeWithRetry(retryCount = 0) {
     ];
     if (EXCLUDED_HOSTS.some(h => hostname.includes(h))) return;
 
+    // Skip search engines and known non-article domains
+    const NON_ARTICLE_HOSTS = ['google.com', 'bing.com', 'duckduckgo.com', 'yahoo.com', 'baidu.com'];
+    if (NON_ARTICLE_HOSTS.some(h => hostname.includes(h))) return;
+
     const text = extractArticleText();
 
     if (!text && retryCount < MAX_RETRIES) {
