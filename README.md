@@ -1,6 +1,14 @@
 # NeuralRead
+[![Wiki](https://img.shields.io/badge/Wiki-Documentation-blue?logo=github)](https://github.com/danishansari-dev/neural-read/wiki)
 
 NeuralRead is a Chrome browser extension + SaaS platform that auto-highlights important sentences on webpages and builds a personal knowledge graph.
+
+## 📚 Documentation
+Full documentation is available in the [NeuralRead Wiki](https://github.com/danishansari-dev/neural-read/wiki):
+- [Setup Guide](https://github.com/danishansari-dev/neural-read/wiki/Setup-Guide)
+- [Architecture](https://github.com/danishansari-dev/neural-read/wiki/Architecture)
+- [API Reference](https://github.com/danishansari-dev/neural-read/wiki/API-Reference)
+- [Deployment](https://github.com/danishansari-dev/neural-read/wiki/Deployment)
 
 ## Architecture & Tech Stack
 

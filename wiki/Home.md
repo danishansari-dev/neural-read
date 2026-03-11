@@ -49,13 +49,13 @@ The platform consists of three components: a Chrome MV3 extension that runs on e
 
 | Page | Description |
 |------|-------------|
-| [Setup Guide](wiki/Setup-Guide.md) | Run locally in 10 minutes |
-| [Architecture](wiki/Architecture.md) | System design deep dive |
-| [API Reference](wiki/API-Reference.md) | All backend endpoints documented |
-| [Extension Guide](wiki/Extension-Guide.md) | How the Chrome extension works |
-| [Database Schema](wiki/Database-Schema.md) | Tables, pgvector, and RLS policies |
-| [Deployment](wiki/Deployment.md) | Vercel + Railway deployment guide |
-| [Contributing](wiki/Contributing.md) | How to contribute to NeuralRead |
+| [[Setup Guide|Setup-Guide]] | Run locally in 10 min |
+| [[Architecture|Architecture]] | System design deep dive |
+| [[API Reference|API-Reference]] | All 7 backend endpoints |
+| [[Extension Guide|Extension-Guide]] | How the extension works |
+| [[Database Schema|Database-Schema]] | Tables + pgvector setup |
+| [[Deployment|Deployment]] | Vercel + Railway deploy guide |
+| [[Contributing|Contributing]] | How to contribute |
 
 ## Live URLs
 
