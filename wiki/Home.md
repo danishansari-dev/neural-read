@@ -57,6 +57,21 @@ The platform consists of three components: a Chrome MV3 extension that runs on e
 | [[Deployment|Deployment]] | Vercel + Railway deploy guide |
 | [[Contributing|Contributing]] | How to contribute |
 
+## 🗺️ Roadmap
+Track upcoming features and known bugs on the 
+[NeuralRead Roadmap Board](https://github.com/danishansari-dev/neural-read/projects)
+
+| Issue | Feature | Status |
+|-------|---------|--------|
+| #7 | Cold start delay fix | 🔄 In Progress |
+| #8 | End-to-end tests | 📋 Backlog |
+| #6 | Offline mode | 📋 Backlog |
+| #3 | Notion export | 📋 Backlog |
+| #4 | Obsidian export | 📋 Backlog |
+| #2 | Transformer NLP | 📋 Backlog |
+| #1 | Firefox port | 📋 Backlog |
+| #5 | Mobile app | 📋 Backlog |
+
 ## Live URLs
 
 | Service | URL |
