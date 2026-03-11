@@ -85,11 +85,7 @@ try {
 // This fires after Google OAuth redirects back to /vault.
 
 /** Dashboard URL pattern to watch for — matches the Vite dev server and Vercel */
-<<<<<<< HEAD
 const DASHBOARD_PATTERN = 'https://neural-read-dashboard.vercel.app';
-=======
-const DASHBOARD_PATTERN = 'https://neural-read-dashboard-fzl754h8p-danishs-projects-25aab0a7.vercel.app';
->>>>>>> 3efdbd31e6d50e879537aee7dd83adffacc63130
 
 /**
  * Attempts to read auth token from a dashboard tab's localStorage.
