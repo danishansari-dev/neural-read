@@ -14,7 +14,7 @@ export const signInWithGoogle = async () => {
   return supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: window.location.origin + '/vault'
+      redirectTo: 'https://neural-read-dashboard.vercel.app/vault'
     }
   });
 };

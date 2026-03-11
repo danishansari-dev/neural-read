@@ -63,7 +63,16 @@ function extractArticleText() {
                 '.mw-parser-output p',       // Wikipedia
                 '[class*="ArticleBody"] p',  // Britannica
                 '[class*="article-body"] p',
-                '[data-testid*="article"] p'
+                '[data-testid*="article"] p',
+                '[class*="course"] p',
+                '[class*="Course"] p',
+                '[class*="description"] p',
+                '[class*="hero"] p',
+                '[class*="about"] p',
+                'section p',
+                'h1',
+                'h2',
+                'h3'
             ];
 
             for (const selector of articleSelectors) {
@@ -404,6 +413,10 @@ async function initializeWithRetry(retryCount = 0) {
         'neural-read-dashboard-git-main-danishs-projects-25aab0a7.vercel.app'
     ];
     if (EXCLUDED_HOSTS.some(h => hostname.includes(h))) return;
+
+    // Skip search engines and known non-article domains
+    const NON_ARTICLE_HOSTS = ['google.com', 'bing.com', 'duckduckgo.com', 'yahoo.com', 'baidu.com'];
+    if (NON_ARTICLE_HOSTS.some(h => hostname.includes(h))) return;
 
     const text = extractArticleText();
 

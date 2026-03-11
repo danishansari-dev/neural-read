@@ -18,6 +18,17 @@
         "https://neural-read-dashboard-fzl754h8p-danishs-projects-25aab0a7.vercel.app/*",
         "https://neural-read-backend-production.up.railway.app/*"
     ],
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "config.js",
+                "styles.css"
+            ],
+            "matches": [
+                "<all_urls>"
+            ]
+        }
+    ],
     "background": {
         "service_worker": "background.js"
     },

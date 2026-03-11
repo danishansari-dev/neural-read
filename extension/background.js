@@ -84,8 +84,8 @@ try {
 // we use chrome.scripting.executeScript to inject a tiny token-reader when the dashboard loads.
 // This fires after Google OAuth redirects back to /vault.
 
-/** Dashboard URL pattern to watch for — matches the Vite dev server */
-const DASHBOARD_PATTERN = 'http://localhost:5173';
+/** Dashboard URL pattern to watch for — matches the Vite dev server and Vercel */
+const DASHBOARD_PATTERN = 'https://neural-read-dashboard.vercel.app';
 
 /**
  * Attempts to read auth token from a dashboard tab's localStorage.
