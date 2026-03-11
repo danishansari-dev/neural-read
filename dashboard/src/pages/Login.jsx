@@ -19,11 +19,7 @@ export default function Login() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-<<<<<<< HEAD
         redirectTo: 'https://neural-read-dashboard.vercel.app/vault'
-=======
-        redirectTo: 'https://neural-read-dashboard-fzl754h8p-danishs-projects-25aab0a7.vercel.app/vault'
->>>>>>> 3efdbd31e6d50e879537aee7dd83adffacc63130
       }
     });
     if (error) setError(error.message);
