@@ -7,7 +7,7 @@ Thank you for your interest in contributing! NeuralRead is an open-source projec
 1. **Fork** the repository on GitHub
 2. **Clone** your fork locally:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/neural-read.git
+   git clone https://github.com/danishansari-dev/neural-read.git
    cd neural-read
    ```
 3. Follow the [Setup Guide](Setup-Guide.md) to get everything running
