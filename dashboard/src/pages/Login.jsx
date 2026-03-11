@@ -19,7 +19,11 @@ export default function Login() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
+<<<<<<< HEAD
         redirectTo: 'https://neural-read-dashboard.vercel.app/vault'
+=======
+        redirectTo: 'https://neural-read-dashboard-fzl754h8p-danishs-projects-25aab0a7.vercel.app/vault'
+>>>>>>> 3efdbd31e6d50e879537aee7dd83adffacc63130
       }
     });
     if (error) setError(error.message);
@@ -83,71 +87,108 @@ export default function Login() {
             fontSize: '15px',
             fontWeight: 600,
             cursor: 'pointer',
-            width: '100%',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '10px',
-            marginBottom: '20px',
-            transition: 'opacity 0.15s',
-            opacity: loading ? 0.6 : 1
+            gap: '12px',
+            width: '100%',
+            marginBottom: '28px',
+            transition: 'all 0.2s ease',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
           }}
-          onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
-          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+          onMouseOver={e => e.currentTarget.style.transform = 'translateY(-1px)'}
+          onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
         >
-          <GoogleIcon /> Continue with Google
+          <GoogleIcon />
+          Continue with Google
         </button>
 
-        {/* Divider */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '12px',
-          marginBottom: '20px', color: 'var(--text-secondary)', fontSize: '0.85rem'
-        }}>
-          <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }} />
-          <span>or</span>
-          <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }} />
+        <div style={{ position: 'relative', textAlign: 'center', marginBottom: '28px' }}>
+          <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.1)' }} />
+          <span style={{ 
+            position: 'absolute', 
+            top: '-10px', 
+            left: '50%', 
+            transform: 'translateX(-50%)',
+            background: 'var(--bg-glass)',
+            padding: '0 12px',
+            color: 'var(--text-tertiary)',
+            fontSize: '0.85rem'
+          }}>or manual sign in</span>
         </div>
 
-        {/* Status messages */}
-        {error && <div style={{ color: '#ff6b6b', marginBottom: '16px', fontSize: '0.9rem' }}>{error}</div>}
-        {message && <div style={{ color: '#34d399', marginBottom: '16px', fontSize: '0.9rem' }}>{message}</div>}
+        {error && <div className="error-message" style={{ marginBottom: '16px', color: '#ff6b6b', fontSize: '0.9rem', background: 'rgba(255,107,107,0.1)', padding: '10px', borderRadius: '6px' }}>{error}</div>}
+        {message && <div className="success-message" style={{ marginBottom: '16px', color: '#4ade80', fontSize: '0.9rem', background: 'rgba(74,222,128,0.1)', padding: '10px', borderRadius: '6px' }}>{message}</div>}
 
-        {/* Email/password form */}
-        <form onSubmit={handleSignIn}>
-          <div className="form-group">
-            <label>Email Address</label>
-            <input
-              type="email" value={email} onChange={e => setEmail(e.target.value)}
-              className="input-field" required placeholder="you@example.com"
-            />
-          </div>
-          <div className="form-group">
-            <label>Password</label>
-            <input
-              type="password" value={password} onChange={e => setPassword(e.target.value)}
-              className="input-field" required placeholder="••••••••"
-            />
-          </div>
-
-          {/* Sign In + Sign Up split buttons */}
-          <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
-            <button type="submit" className="btn-primary" style={{ flex: 1 }} disabled={loading}>
-              {loading ? 'Please wait...' : 'Sign In'}
-            </button>
-            <button
-              type="button" className="btn-primary"
-              style={{ flex: 1, background: 'transparent', color: 'var(--accent-primary)', border: '1px solid var(--accent-primary)' }}
+        {/* Email Auth Form */}
+        <form onSubmit={handleSignIn} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <input
+            type="email"
+            placeholder="Email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            style={{
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              color: 'var(--text-primary)',
+              fontSize: '15px'
+            }}
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            style={{
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              color: 'var(--text-primary)',
+              fontSize: '15px'
+            }}
+          />
+          
+          <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+            <button 
+              type="submit" 
               disabled={loading}
-              onClick={handleSignUp}
+              style={{
+                background: 'var(--accent-glow)',
+                color: '#fff',
+                border: 'none',
+                padding: '12px',
+                borderRadius: '8px',
+                fontWeight: 600,
+                flex: 1,
+                cursor: 'pointer'
+              }}
             >
-              Sign Up
+              Sign In
+            </button>
+            <button 
+              type="button" 
+              onClick={handleSignUp}
+              disabled={loading}
+              style={{
+                background: 'rgba(255,255,255,0.05)',
+                color: 'var(--text-secondary)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                padding: '12px',
+                borderRadius: '8px',
+                fontWeight: 600,
+                flex: 1,
+                cursor: 'pointer'
+              }}
+            >
+              Wait, Sign Up
             </button>
           </div>
         </form>
-
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: '20px', textAlign: 'center', opacity: 0.6 }}>
-          By continuing you agree to our Terms
-        </p>
       </div>
     </div>
   );
