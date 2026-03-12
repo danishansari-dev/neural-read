@@ -3,7 +3,8 @@
 **/node_module
 **/node_modules
 tests/tmp_user_data/
-**/__pycache__/
+__pycache__/
+backend/__pycache__/
 backend/venv/
 .agents/
 package-lock.json
@@ -19,8 +20,6 @@ backend/package-lock.json
 
  
 # temporary test files
-*.txt
-*.json
 
 # debugging files
 playwright_*
