@@ -8,10 +8,10 @@
 // Inlined config — avoids importScripts MV3 service worker loading issues
 const CONFIG = {
   BACKEND_URL: 'https://neural-read-backend-production.up.railway.app',
-  DASHBOARD_URL: 'https://neural-read-dashboard-fzl754h8p-danishs-projects-25aab0a7.vercel.app',
+  DASHBOARD_URL: 'https://neural-read-dashboard.vercel.app',
   ENABLED_KEY: 'nr_enabled',
   TOKEN_KEY: 'nr_token',
-  MAX_HIGHLIGHTS: 3
+  MAX_HIGHLIGHTS: 20
 };
 
 try {
@@ -49,9 +49,19 @@ try {
                     }
                     
                     // Take top elements based on MAX_HIGHLIGHTS setting
-                    const sentencesToHighlight = highlights
-                        .map(h => h.sentence)
-                        .slice(0, CONFIG.MAX_HIGHLIGHTS);
+                    if (!data.highlights || !Array.isArray(data.highlights)) {
+      console.error('NeuralRead: Invalid response format from extraction API', data);
+      return;
+    }
+
+    console.log(`NeuralRead: Sending ${data.highlights.length} highlights to content script`);
+    
+    const payload = {
+      highlights: data.highlights,
+      metadata: data.metadata || {}
+    };
+    
+    chrome.tabs.sendMessage(sender.tab.id, { action: 'RENDER_HIGHLIGHTS', payload });
 
                     // If authenticated, save highlights to DB asynchronously
                     if (token) {
@@ -61,13 +71,13 @@ try {
                             body: JSON.stringify({
                                 url: message.payload.url,
                                 title: message.payload.title,
-                                highlights: sentencesToHighlight,
-                                metadata: message.payload.metadata || {} // Added metadata
+                                highlights: highlights.map(h => h.sentence).slice(0, CONFIG.MAX_HIGHLIGHTS), // Use the new highlights and MAX_HIGHLIGHTS
+                                metadata: message.payload.metadata || {}
                             })
                         }).catch(e => console.error("Optional save failure:", e));
                     }
 
-                    sendResponse({ status: 'success', highlights: sentencesToHighlight });
+                    sendResponse({ status: 'success', highlights: highlights.map(h => h.sentence).slice(0, CONFIG.MAX_HIGHLIGHTS) }); // Use the new highlights and MAX_HIGHLIGHTS
                 } catch (err) {
                     console.error("Backend extraction failed:", err);
                     sendResponse({ status: 'error', error: err.message });
@@ -79,7 +89,13 @@ try {
         // Handle token storage from content script after dashboard Google OAuth.
         // Content script detects the token in localStorage on the dashboard page
         // and forwards it here for secure storage in chrome.storage.local.
-        if (message.type === 'STORE_TOKEN' && message.token) {
+        if (message.action === 'LOGOUT') {
+    chrome.storage.local.remove(['nr_token', 'user_email'], () => {
+      console.log('NeuralRead: User signed out from dashboard, local storage cleared.');
+    });
+  }
+
+  if (message.action === 'SAVE_TOKEN' && message.token) {
             chrome.storage.local.set({
                 [CONFIG.TOKEN_KEY]: message.token,
                 user_email: message.email || 'Google User'
@@ -102,8 +118,7 @@ try {
 /** Dashboard URL pattern to watch for — matches the Vite dev server and Vercel */
 const DASHBOARD_PATTERNS = [
   'http://localhost:5173',
-  'https://neural-read-dashboard.vercel.app',
-  'https://neural-read-dashboard-fzl754h8p-danishs-projects-25aab0a7.vercel.app'
+  'https://neural-read-dashboard.vercel.app'
 ];
 
 /**

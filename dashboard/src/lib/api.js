@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-export const API_URL = `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/api/v1`;
+export const API_URL = `${import.meta.env.VITE_BACKEND_URL || 'https://neural-read-backend-production.up.railway.app'}/api/v1`;
 
 /**
  * Fetches all highlights connected to the authenticated user from the backend API.

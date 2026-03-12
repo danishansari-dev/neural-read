@@ -10,11 +10,9 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="NeuralRead API", version="2.0.0")
 
 # Configure CORS
-allowed_origins_env = os.getenv(
-    "ALLOWED_ORIGINS", 
-    "http://localhost:5173"
-)
-origins = [o.strip() for o in allowed_origins_env.split(",")]
+# Allowed origins for CORS - must include dashboard production and preview sites
+allowed_origins_env = os.getenv("ALLOWED_ORIGINS", "https://neural-read-dashboard.vercel.app,http://localhost:5173")
+origins = allowed_origins_env.split(",")
 
 app.add_middleware(
     CORSMiddleware,
