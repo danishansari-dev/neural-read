@@ -392,7 +392,11 @@ def extract_highlights(text: str, title: str = "", use_gpt: bool = True) -> list
     # Step 4 — GPT reranking (if enabled and API key available)
     final_sentences = None
     
+<<<<<<< HEAD
     if use_gpt:
+=======
+    if use_gpt and os.getenv("OPENAI_API_KEY"):
+>>>>>>> aff023e (feat: complete NLP v2 upgrade and Railway deployment fixes)
         final_sentences = gpt_rerank(top_candidates, title)
         if final_sentences:
             logger.info(f"GPT reranking successful: {len(final_sentences)} highlights")

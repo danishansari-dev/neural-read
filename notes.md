@@ -10,3 +10,9 @@ npm run dev
 Confirm both are running:
 - Backend → **http://localhost:8000/docs** should show Swagger UI
 - Dashboard → **http://localhost:5173** should show your React app
+
+
+Python backend
+
+venv\Scripts\activate
+pip install -r requirements.txt
