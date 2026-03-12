@@ -9,5 +9,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Command to run (port is provided by Railway)
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port $PORT"]
+# Command to run (fixed port 8000 to match Railway env)
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
