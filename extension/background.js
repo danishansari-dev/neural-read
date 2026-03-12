@@ -31,18 +31,25 @@ try {
                     const res = await fetch(`${CONFIG.BACKEND_URL}/api/v1/extract`, {
                         method: 'POST',
                         headers,
-                        body: JSON.stringify(message.payload)
+                        body: JSON.stringify({
+                          url: message.payload.url,
+                          text: message.payload.text,
+                          title: message.payload.title,
+                          metadata: message.payload.metadata || {},
+                          use_gpt: true
+                        })
                     });
 
                     if (!res.ok) throw new Error(`API Error: ${res.status}`);
                     
                     const data = await res.json();
-                    if (!data.highlights || !Array.isArray(data.highlights)) {
+                    const highlights = data.highlights || [];
+                    if (!Array.isArray(highlights)) {
                         throw new Error('Invalid highlight data returned from API');
                     }
                     
                     // Take top elements based on MAX_HIGHLIGHTS setting
-                    const sentencesToHighlight = data.highlights
+                    const sentencesToHighlight = highlights
                         .map(h => h.sentence)
                         .slice(0, CONFIG.MAX_HIGHLIGHTS);
 
@@ -54,7 +61,8 @@ try {
                             body: JSON.stringify({
                                 url: message.payload.url,
                                 title: message.payload.title,
-                                highlights: sentencesToHighlight
+                                highlights: sentencesToHighlight,
+                                metadata: message.payload.metadata || {} // Added metadata
                             })
                         }).catch(e => console.error("Optional save failure:", e));
                     }

@@ -29,16 +29,20 @@ app.include_router(highlights.router, prefix="/api/v1", tags=["highlights"])
 
 @app.get("/")
 async def root():
-    return {"status": "ok", "service": "NeuralRead API", "version": "2.0.0"}
+    return {
+        "message": "NeuralRead Adaptive NLP API is live",
+        "version": "3.0.0",
+        "docs": "/docs"
+    }
 
 @app.get("/health")
-async def health_check():
-    return {"status": "ok", "service": "NeuralRead API", "version": "2.0.0"}
+async def health():
+    return {"status": "healthy", "version": "3.0.0", "engine": "adaptive-v3"}
 
 @app.on_event("startup")
 async def startup_event():
     """Log environment state on startup for debugging deploys."""
-    logger.info("NeuralRead API v2.0 starting...")
+    logger.info("NeuralRead API v3.0 starting...")
     logger.info(f"OPENAI_API_KEY present: {bool(os.getenv('OPENAI_API_KEY'))}")
     logger.info(f"SUPABASE_URL present: {bool(os.getenv('SUPABASE_URL'))}")
     logger.info("NLP engine: TF-IDF + Position + GPT-4o-mini")

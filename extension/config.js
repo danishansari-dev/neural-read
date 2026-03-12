@@ -8,5 +8,5 @@ const CONFIG = {
   DASHBOARD_URL: 'https://neural-read-dashboard.vercel.app',
   ENABLED_KEY: 'nr_enabled',
   TOKEN_KEY: 'nr_token',
-  MAX_HIGHLIGHTS: 3
+  MAX_HIGHLIGHTS: 20,
 };

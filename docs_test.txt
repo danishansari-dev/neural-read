@@ -1,0 +1,11 @@
+C:\Users\daans\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\requests\__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.2) or chardet (7.0.1)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+--- Testing Backend API: https://neural-read-api.onrender.com/ ---
+Status Code: 404
+Response: Not Found
+
+FAIL: Backend returned non-200 status
+/health Status Code: 404
+
+--- Snapping Docs Page: https://neural-read-api.onrender.com/docs ---
+PASS: Saved screenshot to tests/backend-live.png

@@ -238,6 +238,95 @@ function wrapRangeTextNodes(range) {
     );
 
     const nodesToWrap = [];
+  /**
+ * Extracts article metadata to help the NLP engine categorize the page correctly.
+ * @returns {Object} Metadata including word count and structure
+ */
+function extractPageMetadata() {
+  const text = document.body.innerText || '';
+  return {
+    word_count: text.split(/\s+/).length,
+    paragraph_count: document.querySelectorAll('p').length,
+    heading_count: document.querySelectorAll('h1, h2, h3').length,
+    lang: document.documentElement.lang || 'en'
+  };
+}
+
+/**
+ * Listens for messages from the background script.
+ */
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'extract_text') {
+    const text = document.body.innerText;
+    const title = document.title;
+    const metadata = extractPageMetadata();
+    
+    sendResponse({ 
+      text: text, 
+      title: title,
+      metadata: metadata
+    });
+  } else if (request.action === 'apply_highlights') {
+    const highlights = request.highlights || [];
+    renderHighlights(highlights);
+  }
+});
+
+/**
+ * Renders highlights on the page, preserving importance tiers.
+ */
+function renderHighlights(highlights) {
+  // Clear existing highlights first to avoid duplicates
+  document.querySelectorAll('.nr-highlight').forEach(el => {
+    const parent = el.parentNode;
+    parent.replaceChild(document.createTextNode(el.innerText), el);
+    parent.normalize();
+  });
+
+  highlights.forEach(h => {
+    applyHighlight(h.sentence, h.importance_tier || 'important');
+  });
+}
+
+/**
+ * Finds and wraps text with a highlight span.
+ * @param {string} text - The sentence to highlight
+ * @param {string} tier - importance_tier (critical, important, notable)
+ */
+function applyHighlight(text, tier) {
+  const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+  let node;
+  while (node = walk.nextNode()) {
+    if (node.parentElement.tagName === 'SCRIPT' || node.parentElement.tagName === 'STYLE') continue;
+    
+    const index = node.textContent.indexOf(text);
+    if (index !== -1) {
+      const range = document.createRange();
+      range.setStart(node, index);
+      range.setEnd(node, index + text.length);
+      
+      const span = document.createElement('span');
+      span.className = `nr-highlight nr-highlight-${tier}`;
+      span.title = `NeuralRead: ${tier.charAt(0).toUpperCase() + tier.slice(1)} Insight`;
+      
+      try {
+        range.surroundContents(span);
+      } catch (e) {
+        // Fallback for complex nesting
+        const content = node.textContent;
+        const before = document.createTextNode(content.substring(0, index));
+        const after = document.createTextNode(content.substring(index + text.length));
+        span.textContent = text;
+        const parent = node.parentNode;
+        parent.insertBefore(before, node);
+        parent.insertBefore(span, node);
+        parent.insertBefore(after, node);
+        parent.removeChild(node);
+      }
+      break; 
+    }
+  }
+}
     let node;
     while (node = walker.nextNode()) {
         nodesToWrap.push(node);

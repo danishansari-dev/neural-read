@@ -8,9 +8,11 @@ from services.supabase_client import supabase
 router = APIRouter()
 
 class ExtractRequest(BaseModel):
-    text: str
     url: str
-    title: str
+    text: str
+    title: Optional[str] = ""
+    metadata: Optional[dict] = {}
+    use_gpt: Optional[bool] = True
 
 class HighlightSave(BaseModel):
     sentence: str
@@ -34,15 +36,18 @@ async def get_current_user(authorization: Optional[str] = Header(None)):
          raise HTTPException(status_code=401, detail=str(e))
 
 @router.post("/extract")
-async def extract(req: ExtractRequest):
+async def extract(request: ExtractRequest):
     """Run text through NLP pipeline to extract highlights."""
     try:
-        highlights = extract_highlights(
-            text=req.text, 
-            title=req.title,
-            use_gpt=True
+        # Call NLP Service v3
+        highlight_data = extract_highlights(
+            request.text, 
+            title=request.title, 
+            url=request.url,
+            metadata=request.metadata,
+            use_gpt=request.use_gpt
         )
-        return {"highlights": highlights}
+        return {"highlights": highlight_data}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
