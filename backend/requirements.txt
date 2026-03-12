@@ -8,8 +8,4 @@ python-jose[cryptography]==3.3.0
 pydantic==2.7.1
 httpx==0.27.0
 gunicorn==22.0.0
-<<<<<<< HEAD
 nltk==3.8.1
-=======
-nltk==3.8.1
->>>>>>> aff023e (feat: complete NLP v2 upgrade and Railway deployment fixes)
