@@ -5,7 +5,14 @@
  * Uses importScripts to load config.js — the only way to share code
  * with a non-module service worker in MV3.
  */
-importScripts('config.js');
+// Inlined config — avoids importScripts MV3 service worker loading issues
+const CONFIG = {
+  BACKEND_URL: 'https://neural-read-backend-production.up.railway.app',
+  DASHBOARD_URL: 'https://neural-read-dashboard-fzl754h8p-danishs-projects-25aab0a7.vercel.app',
+  ENABLED_KEY: 'nr_enabled',
+  TOKEN_KEY: 'nr_token',
+  MAX_HIGHLIGHTS: 3
+};
 
 try {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {

@@ -66,10 +66,18 @@ function extractArticleText() {
                 '[data-testid*="article"] p',
                 '[class*="course"] p',
                 '[class*="Course"] p',
+                '[class*="lesson"] p',
+                '[class*="tutorial"] p',
+                '[class*="post"] p',
+                '[class*="blog"] p',
+                '[class*="container"] p',
+                '.entry-content p',
                 '[class*="description"] p',
                 '[class*="hero"] p',
                 '[class*="about"] p',
                 'section p',
+                'div[class*="content"] p',
+                'div[class*="description"] p',
                 'h1',
                 'h2',
                 'h3'
@@ -87,7 +95,7 @@ function extractArticleText() {
         paragraphs.forEach(p => {
             const text = p.textContent.trim();
             // Ignore very short paragraphs which are often metadata, UI elements, or copyright notices
-            if (text.length > 50) {
+            if (text.length > 30) {
                 extractedText += text + '\n\n';
             }
         });
@@ -415,7 +423,7 @@ async function initializeWithRetry(retryCount = 0) {
     if (EXCLUDED_HOSTS.some(h => hostname.includes(h))) return;
 
     // Skip search engines and known non-article domains
-    const NON_ARTICLE_HOSTS = ['google.com', 'bing.com', 'duckduckgo.com', 'yahoo.com', 'baidu.com'];
+    const NON_ARTICLE_HOSTS = ['google.com', 'bing.com', 'duckduckgo.com', 'yahoo.com', 'baidu.com', 'mail.google.com', 'drive.google.com', 'docs.google.com'];
     if (NON_ARTICLE_HOSTS.some(h => hostname.includes(h))) return;
 
     const text = extractArticleText();
