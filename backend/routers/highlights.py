@@ -37,7 +37,11 @@ async def get_current_user(authorization: Optional[str] = Header(None)):
 async def extract(req: ExtractRequest):
     """Run text through NLP pipeline to extract highlights."""
     try:
-        highlights = extract_highlights(req.text)
+        highlights = extract_highlights(
+            text=req.text, 
+            title=req.title,
+            use_gpt=True
+        )
         return {"highlights": highlights}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
