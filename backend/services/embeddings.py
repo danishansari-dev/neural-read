@@ -2,12 +2,20 @@ import os
 from openai import OpenAI
 from .supabase_client import supabase
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+def get_openai_client():
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        return None
+    return OpenAI(api_key=api_key)
 
 def get_embedding(text: str) -> list[float]:
     """
     Calls OpenAI to get the text-embedding-3-small vector (1536 dims).
     """
+    client = get_openai_client()
+    if not client:
+        raise Exception("OpenAI client not initialized (missing API key)")
+
     response = client.embeddings.create(
         input=text,
         model="text-embedding-3-small"
