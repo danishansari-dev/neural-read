@@ -92,7 +92,11 @@ try {
 // This fires after Google OAuth redirects back to /vault.
 
 /** Dashboard URL pattern to watch for — matches the Vite dev server and Vercel */
-const DASHBOARD_PATTERN = 'https://neural-read-dashboard.vercel.app';
+const DASHBOARD_PATTERNS = [
+  'http://localhost:5173',
+  'https://neural-read-dashboard.vercel.app',
+  'https://neural-read-dashboard-fzl754h8p-danishs-projects-25aab0a7.vercel.app'
+];
 
 /**
  * Attempts to read auth token from a dashboard tab's localStorage.
@@ -108,11 +112,31 @@ function tryReadDashboardToken(tabId, attempt = 0) {
     chrome.scripting.executeScript({
         target: { tabId },
         func: () => {
-            // This runs in the context of the dashboard page
-            return {
-                token: localStorage.getItem('nr_token'),
-                email: localStorage.getItem('nr_user_email')
-            };
+             // Supabase v2 stores session under this key format
+             const projectRef = 'jvonssuacpucoxnwodlp';
+             const key = `sb-${projectRef}-auth-token`;
+             const raw = localStorage.getItem(key);
+             if (!raw) {
+               // Try alternative keys
+               const allKeys = Object.keys(localStorage);
+               const authKey = allKeys.find(k => 
+                 k.includes('auth-token') || 
+                 k.includes('supabase.auth.token')
+               );
+               if (!authKey) return null;
+               const data = JSON.parse(localStorage.getItem(authKey));
+               const session = data?.currentSession || data?.session || data;
+               return {
+                 token: session?.access_token || null,
+                 email: session?.user?.email || null
+               };
+             }
+             const data = JSON.parse(raw);
+             const session = data?.currentSession || data?.session || data;
+             return {
+               token: session?.access_token || null,
+               email: session?.user?.email || null
+             };
         }
     }).then((results) => {
         const data = results?.[0]?.result;
@@ -139,7 +163,9 @@ function tryReadDashboardToken(tabId, attempt = 0) {
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     // Only act when a dashboard tab finishes loading
     if (changeInfo.status !== 'complete') return;
-    if (!tab.url || !tab.url.startsWith(DASHBOARD_PATTERN)) return;
+    if (!tab.url) return;
+    const isDashboard = DASHBOARD_PATTERNS.some(p => tab.url.startsWith(p));
+    if (!isDashboard) return;
 
     // Initial delay to let React mount and Vault.jsx useEffect fire
     setTimeout(() => tryReadDashboardToken(tabId), 1500);

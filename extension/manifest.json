@@ -15,6 +15,7 @@
         "tabs"
     ],
     "host_permissions": [
+        "https://neural-read-dashboard.vercel.app/*",
         "https://neural-read-dashboard-fzl754h8p-danishs-projects-25aab0a7.vercel.app/*",
         "https://neural-read-backend-production.up.railway.app/*"
     ],
@@ -43,6 +44,7 @@
                 "https://localhost/*",
                 "http://127.0.0.1/*",
                 "https://127.0.0.1/*",
+                "https://neural-read-dashboard.vercel.app/*",
                 "https://neural-read-dashboard-fzl754h8p-danishs-projects-25aab0a7.vercel.app/*"
             ],
             "js": [
