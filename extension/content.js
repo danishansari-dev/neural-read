@@ -439,7 +439,14 @@ async function initialize() {
     }
 
     try {
-        const result = await chrome.storage.local.get([CONFIG.ENABLED_KEY]);
+        // Guard: chrome.storage becomes undefined when extension context 
+  // is invalidated (e.g. extension reloaded while tab is open)
+  if (!chrome?.storage?.local) {
+    console.warn('NeuralRead: Extension context unavailable. Refresh page to reactivate.');
+    return;
+  }
+
+  const result = await chrome.storage.local.get([CONFIG.ENABLED_KEY]);
         const isEnabled = result[CONFIG.ENABLED_KEY] === true;
 
         if (!isEnabled) {
@@ -501,8 +508,11 @@ const RETRY_DELAY = 2000; // 2 seconds between retries
  * (handles JS-rendered pages that load content after initial parse).
  * @param {number} retryCount - Current retry attempt number.
  */
-async function initializeWithRetry(retryCount = 0) {
-    // Skip our own pages
+async function initializeWithRetry(attempts = 0) {
+  if (!chrome?.storage?.local) {
+    return;
+  }
+  const MAX_ATTEMPTS = 5;
     const hostname = window.location.hostname;
     const EXCLUDED_HOSTS = [
         'localhost',
