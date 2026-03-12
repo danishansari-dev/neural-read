@@ -23,8 +23,12 @@ from openai import OpenAI
 
 logger = logging.getLogger(__name__)
 
-# OpenAI client — uses OPENAI_API_KEY from environment
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# OpenAI client — initialized lazily to avoid startup crashes if key is missing
+def get_openai_client():
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        return None
+    return OpenAI(api_key=api_key)
 
 # Words that signal important sentences
 TRANSITION_WORDS = {
@@ -299,6 +303,11 @@ Rules:
 Candidates:
 {numbered}"""
 
+    client = get_openai_client()
+    if not client:
+        logger.warning("OpenAI client not initialized (missing API key)")
+        return None
+
     try:
         response = client.chat.completions.create(
             model="gpt-4o-mini",
@@ -383,7 +392,7 @@ def extract_highlights(text: str, title: str = "", use_gpt: bool = True) -> list
     # Step 4 — GPT reranking (if enabled and API key available)
     final_sentences = None
     
-    if use_gpt and os.getenv("OPENAI_API_KEY"):
+    if use_gpt:
         final_sentences = gpt_rerank(top_candidates, title)
         if final_sentences:
             logger.info(f"GPT reranking successful: {len(final_sentences)} highlights")
