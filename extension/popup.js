@@ -26,10 +26,36 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   /**
    * Checks chrome.storage for an existing auth token and updates the UI.
-   * Shows connected-view if token exists, auth-view otherwise.
+   * If not authenticated, automatically signs in using the test account credentials
+   * because the login screen has been disabled.
+   * @returns {Promise<void>} Resolves when the check and possible auto-auth are done
    */
   const checkAuth = async () => {
-    const { [CONFIG.TOKEN_KEY]: token, user_email: email } = await chrome.storage.local.get([CONFIG.TOKEN_KEY, 'user_email']);
+    let { [CONFIG.TOKEN_KEY]: token, user_email: email } = await chrome.storage.local.get([CONFIG.TOKEN_KEY, 'user_email']);
+    
+    if (!token || !email) {
+      // Auto-authenticate with backend API using test account credentials
+      // because we disabled the manual sign-in interface.
+      try {
+        const res = await fetch(`${CONFIG.BACKEND_URL}/api/v1/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: 'neuralread.test@gmail.com', password: 'TestPass123!' })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          token = data.access_token;
+          email = 'neuralread.test@gmail.com';
+          await chrome.storage.local.set({ 
+            [CONFIG.TOKEN_KEY]: token,
+            user_email: email 
+          });
+        }
+      } catch (err) {
+        console.error('Auto extension auth failed:', err);
+      }
+    }
+
     if (token && email) {
       authView.style.display = 'none';
       connectedView.style.display = 'block';

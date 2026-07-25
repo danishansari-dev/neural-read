@@ -3,6 +3,10 @@ import { supabase } from '../lib/supabase';
 import { Database, Network, Settings as SettingsIcon, LogOut } from 'lucide-react';
 import classNames from 'classnames';
 
+/**
+ * Layout component that provides side navigation and main content panel wrapping.
+ * @returns React Layout component
+ */
 export default function Layout() {
   const navigate = useNavigate();
 
@@ -30,9 +34,15 @@ export default function Layout() {
           </NavLink>
         </nav>
 
+        {/*
+          We hide the sign out button for now since the login/logout flow is disabled
+          and the application runs in a passwordless auto-logged-in session.
+        */}
+        {/* 
         <button onClick={handleLogout} className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
           <LogOut size={18} /> Sign Out
         </button>
+        */}
       </aside>
       
       <main className="main-content">
